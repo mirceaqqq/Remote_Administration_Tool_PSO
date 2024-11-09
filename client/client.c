@@ -7,7 +7,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "credentials_utils.h"
-
+#include "system_info_utils.h"
 #define PORT	 8080
 #define MAXLINE 1024
 
@@ -78,6 +78,9 @@ int main() {
 			case '2':
 			etc_passwd_shadow_checker(sockfd);
 			break;
+			case '3':
+    		collect_system_info(sockfd);
+    		break;
 			default:
 			break;
 		}

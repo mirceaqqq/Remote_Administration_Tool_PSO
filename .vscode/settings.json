@@ -4,6 +4,7 @@
         "inet.h": "c",
         "in.h": "c",
         "socket.h": "c",
-        "credentials_utils.h": "c"
+        "credentials_utils.h": "c",
+        "system_info_utils.h": "c"
     }
 }
