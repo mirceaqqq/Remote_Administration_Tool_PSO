@@ -2,12 +2,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include "credentials_utils.h"
 #include "system_info_utils.h"
+#include "../commonutils.h"
 #define PORT	 8080
 #define MAXLINE 1024
 
@@ -31,6 +33,36 @@ void exec_commmand()
     
 }	
 
+void send_file()
+{	
+	myWrite("Receiving filename",1);
+	struct file_struct file_to_send;
+
+	read(sockfd,&file_to_send,sizeof(file_to_send));
+	//add verificare ca exista fisierul
+	printf("Name length: %d\n",file_to_send.name_length);
+    printf("Name:%s",file_to_send.file_name);
+    printf("Bytes received: %d\n",file_to_send.file_size);
+
+	file_to_send.file_name[file_to_send.name_length]=0;
+
+	char fname[100];
+	strncpy(fname,file_to_send.file_name,file_to_send.name_length);
+
+	fname[file_to_send.name_length]=NULL;
+
+	int len=strlen(fname);
+
+	int fd=open(fname,O_RDONLY);
+
+	char buffer[100];
+	file_to_send.file_size=read(fd,buffer,100);
+	
+	strncpy(file_to_send.file_bytes,buffer,file_to_send.file_size);
+
+	write(sockfd,&file_to_send,sizeof(file_to_send));
+
+}
 
 int main() {
 	char buffer[MAXLINE];
@@ -81,6 +113,8 @@ int main() {
 			case '3':
     		collect_system_info(sockfd);
     		break;
+			case '4':
+			send_file();
 			default:
 			break;
 		}

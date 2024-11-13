@@ -8,7 +8,6 @@
 
 #define BUFFSIZE 8192
 
-void myWrite(char *msg,int fd_out);
 
 void get_command_output(char * command);
 

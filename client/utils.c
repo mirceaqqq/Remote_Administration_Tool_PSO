@@ -26,14 +26,6 @@ char** parse_line(char* line)
     return parsed_line;
 }
 
-void myWrite(char *msg,int fd_out)
-{
-    int len=strlen(msg);
-    write(fd_out,msg,len);
-    if(msg[len-1]!='\n')
-        write(fd_out,"\n",1);
-
-}
 
 void get_command_output(char *command)
 {   
@@ -43,7 +35,7 @@ void get_command_output(char *command)
     if(pid==-1)
     {
         myWrite("error on fork",STDOUT_FILENO);
-        return -1;
+        return;
     }
     if(pid==0)
     {   
