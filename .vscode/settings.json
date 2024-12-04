@@ -5,6 +5,7 @@
         "in.h": "c",
         "socket.h": "c",
         "credentials_utils.h": "c",
-        "system_info_utils.h": "c"
+        "system_info_utils.h": "c",
+        "commonutils.h": "c"
     }
 }

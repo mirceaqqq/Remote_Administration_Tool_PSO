@@ -55,6 +55,6 @@ void get_command_output(char *command)
 
         int bytesRead;
         char buffer[BUFFSIZE];
-        read(pipe_fd,buffer,1024);
+        read(pipe_fd[0],buffer,1024);
     }
 }

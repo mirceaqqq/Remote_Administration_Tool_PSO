@@ -47,7 +47,7 @@ void collect_system_info(int sockfd)
     } else {
         strcat(sys_info, "Failed to get process information.\n");
     }
-
+    myWrite("Sending data");
     int bytes_sent = send(sockfd, sys_info, strlen(sys_info), 0);
 
     // Marker de sfarsit CA ALTFEL NU STIE SA SE OPREASCA FMM

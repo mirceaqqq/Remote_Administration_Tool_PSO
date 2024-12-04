@@ -1,4 +1,9 @@
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/socket.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 typedef struct file_struct
 {
@@ -9,3 +14,9 @@ typedef struct file_struct
 };
 
 void myWrite(char *msg,int fd_out);
+
+int recvData(int sockfd, char *buffer);
+
+void sendData(int sockfd, char* buffer, int size);
+
+void flushSocketRead(int sockfd);

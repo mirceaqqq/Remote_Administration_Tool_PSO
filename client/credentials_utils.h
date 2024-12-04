@@ -1,5 +1,6 @@
 #include "utils.h"
-
+#include "../commonutils.h"
+#include <sys/socket.h>
 
 //cat /etc/passwd | egrep "(\/bin\/bash)|(\/bin\/sh)" | cut -f1 -d: |tr "\n" " "
 //Momentan folosim system pentru convenienta :)

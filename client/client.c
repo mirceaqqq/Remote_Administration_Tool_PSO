@@ -1,3 +1,4 @@
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -7,9 +8,9 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include "traffic_monitor.h"
 #include "credentials_utils.h"
 #include "system_info_utils.h"
-#include "../commonutils.h"
 #define PORT	 8080
 #define MAXLINE 1024
 
@@ -64,11 +65,41 @@ void send_file()
 
 }
 
+void capturetraffic()
+{	
+	int fd_log=open("traffic_log.txt",O_CREAT|O_RDWR);
+
+	int saddr_size,data_size;
+	struct sockaddr saddr;
+	struct in_addr in;
+
+	char buffer[MAXLINE*20];
+
+	int sock_raw=socket(AF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
+	int nr_packets=0;
+	while(nr_packets<=10)
+	{
+	
+	saddr_size=sizeof(saddr);
+	data_size=recvfrom(sock_raw,buffer,MAXLINE*20,0,&saddr,&saddr_size);
+	if(data_size<0)
+	{
+		myWrite("Error handling packets",STDOUT_FILENO);
+	}
+	else processPackets(buffer,data_size,fd_log);
+	//nr_packets++;
+	}
+
+	//TODO: socket error handling
+
+	
+}
+
 int main() {
 	char buffer[MAXLINE];
 	struct sockaddr_in	 servaddr;
 	
-	// Creating socket file descriptor
+	
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ) {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
@@ -76,7 +107,7 @@ int main() {
  
 	memset(&servaddr, 0, sizeof(servaddr));
  
-	// Filling server information
+	
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(PORT);
 	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
@@ -115,6 +146,9 @@ int main() {
     		break;
 			case '4':
 			send_file();
+			case '5':
+			capturetraffic();
+			break;
 			default:
 			break;
 		}
