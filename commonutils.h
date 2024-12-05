@@ -1,9 +1,11 @@
+#pragma once
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#define MAXLINE 1024
 
 typedef struct file_struct
 {

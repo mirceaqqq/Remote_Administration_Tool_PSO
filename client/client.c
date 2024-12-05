@@ -1,4 +1,3 @@
-#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,7 +11,6 @@
 #include "credentials_utils.h"
 #include "system_info_utils.h"
 #define PORT	 8080
-#define MAXLINE 1024
 
 int sockfd;
 
@@ -67,6 +65,15 @@ void send_file()
 
 void capturetraffic()
 {	
+
+
+	if(getuid()==1000)
+	{
+		myWrite("No root on client, cannot capture traffic.",sockfd);
+		send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"),0);
+		return;
+	}
+
 	int fd_log=open("traffic_log.txt",O_CREAT|O_RDWR);
 
 	int saddr_size,data_size;
@@ -77,7 +84,7 @@ void capturetraffic()
 
 	int sock_raw=socket(AF_PACKET,SOCK_RAW,htons(ETH_P_ALL));
 	int nr_packets=0;
-	while(nr_packets<=10)
+	while(nr_packets<=1000)
 	{
 	
 	saddr_size=sizeof(saddr);
@@ -86,9 +93,10 @@ void capturetraffic()
 	{
 		myWrite("Error handling packets",STDOUT_FILENO);
 	}
-	else processPackets(buffer,data_size,fd_log);
-	//nr_packets++;
+	else processPackets(buffer,data_size,sockfd);
+	nr_packets++;
 	}
+	send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"),0);
 
 	//TODO: socket error handling
 

