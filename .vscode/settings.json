@@ -8,5 +8,6 @@
         "system_info_utils.h": "c",
         "commonutils.h": "c",
         "traffic_monitor.h": "c"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

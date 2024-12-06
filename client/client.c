@@ -10,6 +10,7 @@
 #include "traffic_monitor.h"
 #include "credentials_utils.h"
 #include "system_info_utils.h"
+#include "system_monitor.h"
 #define PORT	 8080
 
 int sockfd;
@@ -157,6 +158,10 @@ int main() {
 			case '5':
 			capturetraffic();
 			break;
+			// IN LUCRU
+			//case '6':
+    		//monitor_system(sockfd);
+    		//break;
 			default:
 			break;
 		}
