@@ -37,7 +37,7 @@ void monitor_system(int sockfd)
         strcat(sys_info, "Failed to read /proc/meminfo.\n");
     }
 
-    myWrite("Sending system monitoring data...");
+    myWrite("Sending system monitoring data...",sockfd);
     int bytes_sent = send(sockfd, sys_info, strlen(sys_info), 0);
     if (bytes_sent == -1) {
         perror("Error sending system monitoring data");

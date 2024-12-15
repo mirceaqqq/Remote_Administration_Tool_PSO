@@ -108,7 +108,6 @@ int main() {
 	char buffer[MAXLINE];
 	struct sockaddr_in	 servaddr;
 	
-	
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0 ) {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
