@@ -7,7 +7,8 @@
         "credentials_utils.h": "c",
         "system_info_utils.h": "c",
         "commonutils.h": "c",
-        "traffic_monitor.h": "c"
+        "traffic_monitor.h": "c",
+        "*.tcc": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

