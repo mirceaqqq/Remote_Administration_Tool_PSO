@@ -112,10 +112,12 @@ int main() {
 		perror("socket creation failed");
 		exit(EXIT_FAILURE);
 	}
- 
-	memset(&servaddr, 0, sizeof(servaddr));
- 
+
+	setvbuf(stdout,0,_IONBF,0);
 	
+	memset(&servaddr, 0, sizeof(servaddr));
+
+
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port = htons(PORT);
 	servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");

@@ -11,7 +11,8 @@ void myWrite(char *msg,int fd_out)
 
 int recvData(int sockfd, char* buffer)
 {
-    char* ret_buffer=(char *)malloc(8192*10);
+    char* ret_buffer=(char *)malloc(8192*20);
+    memset(ret_buffer,0,8192*20);
     int bytes_read;
     char read_buffer[8192];
     int total_bytes_read=0;
@@ -22,16 +23,18 @@ int recvData(int sockfd, char* buffer)
     {
         read_buffer[bytes_read]='\0';
         char *end_marker=strstr(read_buffer,"<END_OF_DATA>");
+        myWrite("Im stuck here",STDOUT_FILENO);
         if(end_marker!=NULL)
         {
             *end_marker='\0';
             strcat(ret_buffer,read_buffer);
             myWrite("received data",STDOUT_FILENO);
+            break;
         }
         strcat(ret_buffer,read_buffer);
         total_bytes_read+=bytes_read;
     }
-
+    myWrite("Bye!",STDOUT_FILENO);
     buffer=ret_buffer;
     return total_bytes_read;
     

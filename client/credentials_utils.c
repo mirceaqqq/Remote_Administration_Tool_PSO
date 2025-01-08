@@ -65,9 +65,10 @@ void etc_passwd_shadow_checker(int sock_fd)
             read(fd_user,userdata,300);
             strcat(contents,userdata);
         }
-        send(sock_fd,contents,sizeof(contents),0);
+        //send(sock_fd,contents,sizeof(contents),0);
         myWrite(contents,STDOUT_FILENO);
         send(sock_fd, "<END_OF_DATA>", strlen("<END_OF_DATA>"),0);
+        printf("size of contents: %d",sizeof(contents));
     }
     
 }
