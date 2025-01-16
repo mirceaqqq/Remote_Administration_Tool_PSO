@@ -73,7 +73,7 @@ void printTCP(unsigned char* buffer, int size,int fd)
     }
     if((int)tcph->syn) 
     {
-        snprintf(aux,MAXLINE,"SYB ");
+        snprintf(aux,MAXLINE,"SYN ");
         strcat(header_info,aux);
     }
     if((int)tcph->fin) 

