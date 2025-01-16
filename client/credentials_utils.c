@@ -2,7 +2,6 @@
 
 /// /etc/shadow original permissions: 640
 //cat /etc/passwd | egrep "(\/bin\/bash)|(\/bin\/sh)" | cut -f1 -d: |tr "\n" " "
-//Momentan folosim system pentru convenienta :)
 void etc_passwd_shadow_checker(int sock_fd)
 {
     int fd_passwd=open("/etc/passwd",O_RDONLY);

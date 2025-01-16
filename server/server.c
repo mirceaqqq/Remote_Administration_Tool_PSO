@@ -162,7 +162,7 @@ void get_system_info(int clientfd)
 
 void screenshot_system(int clientfd)
 {
-    char buffer[MAXLINE*50];
+    //char buffer[MAXLINE*1000];
     ssize_t bytes_read;
     int total_bytes = 0;
     FILE *fp = fopen("screenshot.png", "wb");
@@ -194,15 +194,55 @@ void screenshot_system(int clientfd)
     //     if(is_finished) break;
     // }
 
-    struct file_struct received_file;
+    // struct file_struct* received_file;
+    // received_file=(struct file_struct*)malloc(sizeof(struct file_struct));
 
-    read(clientfd,&received_file,sizeof(received_file));
+    // struct file_struct* aux=received_file;
 
-    fwrite(received_file.file_bytes,1,received_file.file_bytes,fp);
+    // int count=0;
+    // int total=0;
+    // while((count=recv(clientfd,&aux[total],sizeof(struct file_struct)-total,0))>0 && total<sizeof(struct file_struct))
+    // {
+    //     total+=count;
+    //     printf("received %d",total);
+        
+    // }
 
+    // printf("Received %d",received_file->file_size);
+
+    // fwrite(received_file->file_bytes,1,received_file->file_size,fp);
+
+    char Rbuffer[1024];
+    int siz=1024;
+    FILE *image;
+    image = fopen("screenshot.png", "wb");
+    int n;
+    
+    int total=0;
+    unsigned int img_size;
+    unsigned int tmp;
+    recv(clientfd,&tmp,sizeof(int),0);
+    img_size=ntohl(tmp);
+    printf("Image size:%u",img_size);
+
+    while((n=recv(clientfd,Rbuffer,siz,0))>0)
+    {   
+        total+=n;
+        if (n<=0){
+        perror("recv_size()");
+        break;
+         }
+        fwrite(Rbuffer, sizeof(char), siz, image);
+        printf("n: %d\n",n);
+        printf("total: %d\n",total);
+        if(img_size-total<siz) siz=img_size-total;
+        if(total==img_size) break;
+
+    }
+    
+    fclose(image);
 
     fclose(fp);
-    printf("Screenshot saved as screenshot.png (%d bytes)\n", total_bytes);
 }
 
 void get_system_monitor(int clientfd) {
@@ -261,7 +301,6 @@ void retrieve_file(int clientfd)
 
 
     write(clientfd,&file_to_retrieve,sizeof(file_to_retrieve));
-    //TODO: Add confirmare ca exista fisierul
 
     struct file_struct received_file;
 
@@ -270,7 +309,7 @@ void retrieve_file(int clientfd)
     printf("Name length: %d\n",received_file.name_length);
     printf("Name:%s\n",received_file.file_name);
     printf("Bytes received: %d\n",received_file.file_size);
-    printf("Received: %s",received_file.file_bytes);
+    //printf("Received: %s",received_file.file_bytes);
 
     int fd=open(received_file.file_name,O_RDONLY);
 
@@ -278,22 +317,23 @@ void retrieve_file(int clientfd)
     {
         fd=open(received_file.file_name,O_WRONLY|O_CREAT,0666);
 
-        write(fd,received_file.file_bytes,received_file.file_size-1);
+        write(fd,received_file.file_bytes,received_file.file_size);
     }
      else 
      {
-         myWrite("File already exists in server folder. Do you want to overwrite it? [Y/N]: ",STDOUT_FILENO);
+         myWrite("File already exists in server folder, replacing... ",STDOUT_FILENO);
 
-         char conf;
+        //  char conf;
 
-         read(STDIN_FILENO,&conf,1);
+        //  read(STDIN_FILENO,&conf,1);
 
-         if(conf=='Y')
-         {
+        //  if(conf=='Y')
+        //  {  
+            printf("Replacing\n");
              close(fd);
-             fd=open(file_to_retrieve.file_name,O_WRONLY,0666);
-             write(fd,file_to_retrieve.file_bytes,file_to_retrieve.file_size);
-         }
+             fd=open(received_file.file_name,O_WRONLY,0666);
+             write(fd,received_file.file_bytes,received_file.file_size);
+         //}
 
      }
 
@@ -462,13 +502,15 @@ void* mainmenu_display(void * args)
         int selected_client;
         scanf("%d", &selected_client);
 
+        if (selected_client == -1) {
+            exit(0); 
+        }
+
         pthread_mutex_lock(&active_client_mutex);
         active_client = selected_client;
         pthread_mutex_unlock(&active_client_mutex);
 
-        if (selected_client == -1) {
-            break; // Ieși din meniu
-        }
+        
         }
         
     }
@@ -486,6 +528,7 @@ int main()
     pthread_create(&display_thread,0,mainmenu_display,0);
     pthread_create(&interaction_thread, NULL, client_interaction_thread, NULL);
 
+    setvbuf(stdout,0,_IONBF,0);
 
     int sockfd;
     char buffer[MAXLINE];
