@@ -7,6 +7,6 @@
 #include <unistd.h>
 #include "../commonutils.h"
 
-void monitor_system(int sock_fd);
+void monitor_system(int sockfd);
 
-#endif 
+#endif

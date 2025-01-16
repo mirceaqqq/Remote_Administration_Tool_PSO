@@ -6,7 +6,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #define MAXLINE 1024
-
+#define CONN_TIMEOUT 30
+#define CONN_CLOSED -1
+#define CONN_ERROR -2
 typedef struct file_struct
 {
     int name_length;
