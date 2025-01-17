@@ -1,0 +1,24 @@
+
+Clientii incep conectarea de le id ul 0 crescator.
+Meniul cu clientii conectati se acceseaza prin opriunea 8, si se vor aafisa toti clientii impreuna cu id ul
+si ip ul sau.
+Clientul se conecteaza la adresa ip locala(pentru test) 127.0.0.1
+
+
+Mod utilizare: Se ruleaza prima data serverul iar apoi se ruleaza si clientii
+
+
+
+Functionalitati:
+Executie comenzi remote - se face un dup de fd si se foloseste functia system pentru a executa comanda de pe
+server
+Scanner parole/user fisier - se cauta in etc/passwd useri si in etc/shadow parolele folosindu se de un regex
+Preluare informatii sistem - se afiseaza versiunea sis de operare a clientului, userii activi si
+procesele 
+Transfer fisiere - se introduce numele fisierului dorit sa fie extras de pe client, iar acesta
+va fi transferat catre server
+Monitorizare retea - se captureaza traficul de retea
+Monitorizare sistem - se afiseaza usage-ul memeoriei si al cpu-ului
+Screenshot - se realizeaza o captura de ecran pe client si apoi estre trimis pe server - uneori nu merge din prima/merge doar pe 
+gnome( necesita utilitar gnome-screenshot)
+Monitorizare clienti - administrarea clientilor
