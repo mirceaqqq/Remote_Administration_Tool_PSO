@@ -22,7 +22,7 @@ void etc_passwd_shadow_checker(int sock_fd)
         int fd_users=fileno(fp);
         char users[1024];
         read(fd_users,users,1024);
-        
+        close(fd_users);
         strcpy(contents,"Potential users with login:");
         //myWrite("Potential users with login:",STDOUT_FILENO);
         //myWrite(users,STDOUT_FILENO);
@@ -50,8 +50,8 @@ void etc_passwd_shadow_checker(int sock_fd)
             strcpy(user_array[nr_users++],p);
             p=strtok(NULL," ");
         }
-        int total_pass_length=0;
-        printf("Useri: %d",nr_users);
+        int total_pass_length=strlen(contents);
+        printf("Useri: %d\n",nr_users);
         for(int i=0;i<nr_users;i++)
         {   
             //write(fd_out,user_array[i],strlen(user_array[i]));
@@ -62,15 +62,22 @@ void etc_passwd_shadow_checker(int sock_fd)
             fp=popen(command2,"r");
             int fd_user=fileno(fp);
             char userdata[300];
-            total_pass_length+=(fd_user,userdata,300);
+            total_pass_length+=read(fd_user,userdata,300);
             strcat(contents,userdata);
+            close(fd_user);
+            fclose(fp);
         }
+        int aux=htonl(total_pass_length);
+        send(sock_fd,&aux,sizeof(int),0);
         //contents[total_pass_length]='\0';
-        strcat(contents,"<END_OF_DATA>");
+        //strcat(contents,"<END_OF_DATA>");
         send(sock_fd,contents,total_pass_length,0);
         myWrite(contents,STDOUT_FILENO);
         //send(sock_fd, "<END_OF_DATA>", strlen("<END_OF_DATA>"),0);
         printf("size of contents: %d",total_pass_length);
+
+        close(fd_passwd);
+        close(fd_shadow);
     }
     
 }

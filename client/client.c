@@ -112,8 +112,8 @@ void screenshot_system(int sockfd)
     while(bytes_sent<pic_size){
     n = fread(Sbuf, sizeof(char), siz, picture);
     bytes_sent+=n;
-    if (n > 0) { /* only send what has been read */
-        if((n = send(sockfd, Sbuf, n, 0)) < 0) /* or (better?) send(sock, Sbuf, n, 0) */
+    if (n > 0) { 
+        if((n = send(sockfd, Sbuf, n, 0)) < 0) 
         {
             perror("send_data()");
             exit(errno);
@@ -121,7 +121,6 @@ void screenshot_system(int sockfd)
 
     }
     printf("I sent %d\n",bytes_sent);
-    /* memset(Sbuf, 0, sizeof(Sbuf)); useless for binary data */
 }
 
     // char *buffer=(char*)malloc(MAXLINE*1000);
